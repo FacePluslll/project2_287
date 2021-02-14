@@ -1,4 +1,5 @@
 import java.util.Scanner;
+import java.util.Stack;
 import java.io.*;
 import java.util.ArrayList;
 
@@ -6,113 +7,175 @@ public class infixInput {
 	public static void main(String[] args ) throws FileNotFoundException{
 		FileInputStream inputFile = new FileInputStream("input.txt");
 		Scanner scnr = new Scanner(inputFile);
+		
 
 		String line = "";
 		while (scnr.hasNext()) {
 			line = scnr.nextLine();
+
 			System.out.println(line);
+			System.out.println(infixToPostFix(line));
 		}
 	}
-	// iterate through the input file and get the first line(the line), call that
-	// line line
-	public static int getPredence(String A) { // sets the predence of the operators
-		switch
-		if (A == "||")
-			return 1; // this would be a boolean, 1 is true
-		else if (A == "&&")
-			return 2; // this is boolean, would return 2 or 0 is false
-		else if (A == "==" || A == "!=")
-			return 3;// boolean? 1 is true
-		else if (A == ">" || A == ">=" || A == "<" || A == "<=")
-			return 4; // boolean? 1 is true
-		else if (A == "+" || A == "-")
-			return 5;
-		else if (A == "*" || A == "/" || A == "%")
-			return 6;
-		else if (A == "^")
-			return 7;
-		return 0;
-	} // change into a switch
 
-	public static boolean isOperator(char a) {
-		return (!(a >= 'a' && a <= 'z') && !(a >= '0' && a <= '9') && !(a >= 'A' && a <= 'Z'));
+	public static int checkIfOperator(char c){
+		if(c == '+' || c == '-'){
+			return 1;
+		}
+		else if(c == '*' || c == '/' || c == '%'){
+			return 2;
+		}
+		else if(c == '^'){
+			return 3;
+		}
+		else
+			return -1;
 	}
 
-	public static String lineToPostfix(String line) // accepts the line string
-	{
-		Stack<String> operators = new Stack<String>(); // make a stack that stores operators
-		Stack<String> operands = new Stack<String>(); // stack that stores operands, like a and b
+	// converts the string sent into post fix expression, also removes spaces and ()
+	public static String infixToPostFix(String input){
+		Stack<Character> stack = new Stack<>();
+		StringBuilder sb = new StringBuilder();
 
-		for (int i = 0; i < line.length(); i++) {// iterator through and search for paranthesis
-			if (line.charAt(i) == '(') {
-				operators.push(line.substring(i, i + 1));// push paranthesis into the first stack
-			} else if (line.charAt(i) == ')') {
-				String temp="";
-				while (!operators.empty() && operators.peek() != "(") {
-					
-					String operator = operators.pop(); // combines operands and operator into one expression
-
-					temp += operator;
-				}
-				// removes remaining bracket from stack
-				
-				while(!operands.empty()){
-					String operand1 = operands.pop();
-					temp +=operand1;
-				}
-				operands.push(temp); // pushes paranthesis string into operands stack	
-			} else if (!isOperator(line.charAt(i))) { // make isoperator method
-				operands.push(line.charAt(i) + "");
-			} else {
-				String temp="";
-				while (!operators.empty() && getPredence(line.substring(i, i + 1)) <= getPredence(operators.peek())) {
-
-					String operator = operators.pop(); // combines operands and operator into one expression
-
-					temp += operator;
-				}
-				while(!operands.empty()){
-					String operand1 = operands.pop();
-					temp +=operand1;
-				}
-				operands.push(temp);
-				if (line.charAt(i) == '>' || line.charAt(i) == '<') {
-					if (line.charAt(i + 1) == '=') {
-						operators.push(line.substring(i, i + 2));
-						i++;
-					} else {
-						operators.push(line.substring(i, i + 1));
-					}
-				} else if (line.charAt(i) == '=' || line.charAt(i) == '!') {
-					if (line.charAt(i + 1) == '=') {
-						operators.push(line.substring(i, i + 2));
-						i++;
-					}
-				} else if (line.charAt(i) == '&' || line.charAt(i) == '|') {
-					if (line.charAt(i) == line.charAt(i + 1)) {
-						operators.push(line.substring(i, i + 2));
-						i++;
-					}
-				} else {
-					operators.push(line.substring(i, i + 1));
-				}
-				temp="";
-				while(!operators.empty())
-				{
-					String operator = operators.pop(); // combines operands and operator into one expression
-
-					temp += operator;
-				}
-				while(!operands.empty()){
-					String operand1 = operands.pop();
-					temp +=operand1;
-				}
-				operands.push(temp);
+		// loop the entire string
+		for(int i = 0; i < input.length(); i++){
+			char c = input.charAt(i);
+			//skip if it is a space
+			if(c == ' '){
+				continue;
 			}
-			
+			//check if the char is an operator
+			if(checkIfOperator(c)>0){
+				//will start to pop off from the stack and add to sb if the stack peek is greater then the current operator
+				while(stack.isEmpty() == false && checkIfOperator(stack.peek())>= checkIfOperator(c)){
+					sb.append(stack.pop());
+				}
+				//push the new operator to stack
+				stack.push(c);
+			}
+			//special case of the ()
+			//found the end of ()
+			else if(c == ')'){
+				//special case where the () has no operators in it (often seen with bool operations)
+				if(stack.isEmpty()){
+					continue;
+				}
+				//get last operator added
+				char temp = stack.pop();
+				while(temp != '('){
+					//keep appending until stack finds the ( operator
+					sb.append(temp);
+					temp = stack.pop();
+				}
+			}
+			//found start of () add to stack
+			else if(c == '('){
+				stack.push(c);
+			}
+			//append to sb if all conditions before it dont pass (also check for bool cases)
+			else{
+				sb.append(c);
+
+				// if the next char is a comparsion operator then panic dump the stack to sb
+				char temp2 = ' ';
+				//its 2 and not 1 because of the extra char of due to space
+				if(i+2<input.length()){
+					int x = i + 2;
+					temp2 = input.charAt(x);
+				}
+				else{
+					temp2 = input.charAt(i);
+				}
+				if(temp2 == '&'|| temp2 == '=' || temp2 == '>'|| temp2 == '<'|| temp2 == '|'){
+					// append the rest of the stack
+					while(!stack.isEmpty()){
+						if(stack.peek() != '(' && stack.peek() != ')'){
+							sb.append(stack.pop());
+						}
+						//pop off () since we will no longer need it (often seen with bool operations)
+						else if(stack.peek() == '(' || stack.peek() == ')'){
+							stack.pop();
+						}
+					}
+				}
+			}
 		}
-		System.out.println(operands);
-		return operands.peek();
+		// append the rest of the stack
+		while (!stack.isEmpty()) {
+			sb.append(stack.pop());
+		}
+
+		evluatePostFix(sb);
+		return sb.toString();
+
 	}
 
+	// starts here
+	static int evluatePostFix(StringBuilder sb) {
+
+		// create a stack
+		Stack<Integer> newStck = new Stack<>();
+
+		// Scan all characters one by one
+		for (int i = 0; i < sb.length(); i++) {
+			char d = sb.charAt(i);
+
+			// If the scanned character is an operand (number here),
+			// push it to the stack.
+			if (Character.isDigit(d))
+				newStck.push(d - '0');
+
+			// If the scanned character is an operator, pop two
+			// elements from stack apply the operator
+			else {
+				int val1 = newStck.pop();
+				int val2 = newStck.pop();
+
+				switch (d) {
+				case '+':
+					newStck.push(val2 + val1);
+					break;
+
+				case '-':
+					newStck.push(val2 - val1);
+					break;
+
+				case '/':
+					newStck.push(val2 / val1);
+					break;
+
+				case '*':
+					newStck.push(val2 * val1);
+					break;
+					
+				case '^':
+					newStck.push((int) Math.pow(val1, val2));
+					break;
+					
+				case '>':
+					return (Integer) null;
+					
+				case '!':
+					return (Integer) null;
+					
+				case '=':
+					return (Integer) null;
+				
+				case '&':
+					return (Integer) null;
+					
+				case '|':
+					return (Integer) null;
+				
+				case '<':
+					return (Integer) null;
+				}
+			}
+		}
+		int eval = newStck.pop();
+		System.out.println(eval); // may need to change this to a string, ask them. change to static String and do
+											// string eval=Integer.toString()
+		return eval;
+	}
+	
 }
