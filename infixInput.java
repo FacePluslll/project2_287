@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 public class infixInput {
+	public static boolean isBoolExpression = false;
 	public static void main(String[] args ) throws FileNotFoundException{
 		FileInputStream inputFile = new FileInputStream("input.txt");
 		Scanner scnr = new Scanner(inputFile);
@@ -92,6 +93,7 @@ public class infixInput {
 				}
 				if(temp2 == '&'|| temp2 == '=' || temp2 == '>'|| temp2 == '<'|| temp2 == '|'){
 					// append the rest of the stack
+					isBoolExpression = true;
 					while(!stack.isEmpty()){
 						if(stack.peek() != '(' && stack.peek() != ')'){
 							sb.append(stack.pop());
@@ -112,7 +114,7 @@ public class infixInput {
 		return sb.toString();
 	}
 	public static int comparator(String line) {
-		if (line.contains(">") || line.contains("==") || line.contains("<") || line.contains("&&") || line.contains("||")) {
+		if (isBoolExpression) {
 			/*
 			This program parses the input strng at the operator then each side of the operator is evaluated and stored in a variable as an integer.
 			Following this evaluation is the comparison that correlates to the operator.
@@ -131,7 +133,7 @@ public class infixInput {
 			boolean beenAdded = false;
 
 			for (int i = 0; i < line.length(); i ++) {
-				if(line.charAt(i) == '>' || line.charAt(i) == '<'|| line.charAt(i) == '|'|| line.charAt(i) == '&'|| line.charAt(i) == '='){
+				if(line.charAt(i) == '>' || line.charAt(i) == '<'|| line.charAt(i) == '|'|| line.charAt(i) == '&'|| line.charAt(i) == '=' || line.charAt(i) == '!'){
 					booloperator.append(line.charAt(i));
 					if(line.charAt(i+1) == '=' || line.charAt(i+1) == '|'|| line.charAt(i+1) == '&'){
 						booloperator.append(line.charAt(i+1));
@@ -154,48 +156,55 @@ public class infixInput {
 				}
 			}
 
-			/*int d = 0;
-			while(true){
-				d++;
-
-				break;
-			}*/
-
 			for (int i = 0; i < arr.size(); i++) {
 				//System.out.println(arr.get(i).toString());
 				System.out.println("Array value: " + arr.get(i).toString()+" Test case: "+evluatePostFix(arr.get(i)));
 
-			}
+				givCom = queue.poll(); //if givCom -- && then givNum = returnNum
+				givNum = evluatePostFix(arr.get(i));
+				if (i < arr.size() - 1) {
+					i++;
+					givNum2 = evluatePostFix(arr.get(i));
+				}
+
+				if (givCom.equals(">")) {
+					if (givNum > givNum2) {returnNum = 1;}
+					else {returnNum = 0;}
+				}
+				else if (givCom.equals(">=")) {
+					if (givNum >= givNum2) {returnNum = 1;}
+					else {returnNum = 0;}
+				}
+				else if (givCom.equals("<")) {
+					if (givNum < givNum2) {returnNum = 1;}
+					else{returnNum = 0;}
+				}
+				else if (givCom.equals("<=")) {
+					if (givNum <= givNum2){returnNum = 1;}
+					else{returnNum = 0;}
+				}
+				else if (givCom.equals("==")) {
+					if (givNum == givNum2) {returnNum = 1;}
+					else {returnNum = 0;}
+				}
+				else if (givCom.equals("!=")) {
+					if (givNum != givNum2) {returnNum = 1;}
+					else {returnNum = 0;}
+				}
+				else if (givCom.equals("&&")) {
+					givNum = returnNum;
+					givNum2 = givNum = evluatePostFix(arr.get(i));
+					if (givNum + givNum2 < 1) {
+						return 0;
+					}
+					else{return 1;}
+				}
+				else if (givCom.equals("||")) {}
+				}
 
 
 			//System.out.println(givNum + givCom + givNum2);
-
-			if (givCom.equals(">")) {
-				if (givNum > givNum2) {returnNum = 1;}
-				else {returnNum = 0;}
-			}
-			else if (givCom.equals(">=")) {
-				if (givNum >= givNum2) {returnNum = 1;}
-				else {returnNum = 0;}
-			}
-			else if (givCom.equals("<")) {
-				if (givNum < givNum2) {returnNum = 1;}
-				else{returnNum = 0;}
-			}
-			else if (givCom.equals("<=")) {
-				if (givNum <= givNum2){returnNum = 1;}
-				else{returnNum = 0;}
-			}
-			else if (givCom.equals("&&")) {
-				result = comparator(line);
-				if (result == 1 && returnNum == 1) {returnNum = 1;}
-				else{returnNum = 0;}
-			}
-			else if (givCom.equals("||")) {}
-
-
-
-
+			isBoolExpression = false;
 			return returnNum;
 		}
 		else {
@@ -206,6 +215,7 @@ public class infixInput {
 			System.out.println("Test case: "+str);
 			return evluatePostFix(str);
 		}
+		
 	}
 	static int evluatePostFix(StringBuilder sb) {
 
