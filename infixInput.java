@@ -2,6 +2,8 @@ import java.util.Scanner;
 import java.util.Stack;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class infixInput {
 	public static void main(String[] args ) throws FileNotFoundException{
@@ -12,9 +14,11 @@ public class infixInput {
 		String line = "";
 		while (scnr.hasNext()) {
 			line = scnr.nextLine();
-
+			
 			System.out.println(line);
 			System.out.println(infixToPostFix(line));
+			System.out.println(comparator(infixToPostFix(line)));
+			System.out.println(" ");
 		}
 	}
 
@@ -107,4 +111,172 @@ public class infixInput {
 
 		return sb.toString();
 	}
+	public static int comparator(String line) {
+		if (line.contains(">") || line.contains("==") || line.contains("<") || line.contains("&&") || line.contains("||")) {
+			/*
+			This program parses the input strng at the operator then each side of the operator is evaluated and stored in a variable as an integer.
+			Following this evaluation is the comparison that correlates to the operator.
+			*/
+
+			int returnNum = 0;
+			int result = 0;
+			int givNum = 3; 
+			int givNum2 = 3;
+			String givCom = "<=";
+
+			Queue<String> queue = new LinkedList<String>();
+			ArrayList<StringBuilder> arr = new ArrayList<StringBuilder>();
+			StringBuilder booloperator = new StringBuilder();
+			StringBuilder str = new StringBuilder();
+			boolean beenAdded = false;
+
+			for (int i = 0; i < line.length(); i ++) {
+				if(line.charAt(i) == '>' || line.charAt(i) == '<'|| line.charAt(i) == '|'|| line.charAt(i) == '&'|| line.charAt(i) == '='){
+					booloperator.append(line.charAt(i));
+					if(line.charAt(i+1) == '=' || line.charAt(i+1) == '|'|| line.charAt(i+1) == '&'){
+						booloperator.append(line.charAt(i+1));
+						i++;
+					}
+					queue.add(booloperator.toString());
+					booloperator = new StringBuilder();
+					if(!beenAdded && str.length()!=0){
+						arr.add(str);
+					}
+					str = new StringBuilder();
+					beenAdded = false;
+				}
+				else{
+					str.append(line.charAt(i));
+					if(!beenAdded){
+						arr.add(str);
+						beenAdded = true;
+					}
+				}
+			}
+
+			/*int d = 0;
+			while(true){
+				d++;
+
+				break;
+			}*/
+
+			for (int i = 0; i < arr.size(); i++) {
+				//System.out.println(arr.get(i).toString());
+				System.out.println("Array value: " + arr.get(i).toString()+" Test case: "+evluatePostFix(arr.get(i)));
+
+			}
+
+
+			//System.out.println(givNum + givCom + givNum2);
+
+			if (givCom.equals(">")) {
+				if (givNum > givNum2) {returnNum = 1;}
+				else {returnNum = 0;}
+			}
+			else if (givCom.equals(">=")) {
+				if (givNum >= givNum2) {returnNum = 1;}
+				else {returnNum = 0;}
+			}
+			else if (givCom.equals("<")) {
+				if (givNum < givNum2) {returnNum = 1;}
+				else{returnNum = 0;}
+			}
+			else if (givCom.equals("<=")) {
+				if (givNum <= givNum2){returnNum = 1;}
+				else{returnNum = 0;}
+			}
+			else if (givCom.equals("&&")) {
+				result = comparator(line);
+				if (result == 1 && returnNum == 1) {returnNum = 1;}
+				else{returnNum = 0;}
+			}
+			else if (givCom.equals("||")) {}
+
+
+
+
+			return returnNum;
+		}
+		else {
+			StringBuilder str = new StringBuilder();
+			for (int i = 0; i < line.length(); i ++) {
+					str.append(line.charAt(i));
+				}
+			System.out.println("Test case: "+str);
+			return evluatePostFix(str);
+		}
+	}
+	static int evluatePostFix(StringBuilder sb) {
+
+		// create a stack
+		Stack<Integer> newStck = new Stack<>();
+
+		// Scan all characters one by one
+		for (int i = 0; i < sb.length(); i++) {
+			char d = sb.charAt(i);
+
+			// If the scanned character is an operand (number here),
+			// push it to the stack.
+			if (Character.isDigit(d))
+				newStck.push(d - '0');
+
+			// If the scanned character is an operator, pop two
+			// elements from stack apply the operator
+			else {
+				int val1 = newStck.pop();
+				int val2 = newStck.pop();
+
+				switch (d) {
+				case '+':
+					newStck.push(val2 + val1);
+					break;
+
+				case '-':
+					newStck.push(val2 - val1);
+					break;
+
+				case '/':
+					newStck.push(val2 / val1);
+					break;
+
+				case '*':
+					newStck.push(val2 * val1);
+					break;
+
+				case '^':
+					newStck.push((int) Math.pow(val2, val1));
+					break;
+
+				case '%':
+					newStck.push(val2 % val1);
+					break;
+
+				case '>':
+					return (Integer) null;
+
+				case '!':
+					return (Integer) null;
+
+				case '=':
+					return (Integer) null;
+
+				case '&':
+					return (Integer) null;
+
+				case '|':
+					return (Integer) null;
+
+				case '<':
+					return (Integer) null;
+				}
+			}
+		}
+		int eval = newStck.pop();
+		//System.out.println(eval); // may need to change this to a string, ask
+									// them. change to static String and do
+									// string eval=Integer.toString()
+		return eval;
+	}
+
 }
