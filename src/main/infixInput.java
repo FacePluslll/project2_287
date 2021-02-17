@@ -1,3 +1,5 @@
+package src.main;
+
 import java.util.Scanner;
 import java.util.Stack;
 import java.io.*;
@@ -9,7 +11,7 @@ import java.util.Queue;
 public class infixInput {
 	public static boolean isBoolExpression = false;
 	public static void main(String[] args ) throws FileNotFoundException{
-		FileInputStream inputFile = new FileInputStream("input.txt");
+		FileInputStream inputFile = new FileInputStream("src/input.txt");
 		Scanner scnr = new Scanner(inputFile);
 		
 
