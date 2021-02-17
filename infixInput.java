@@ -3,6 +3,7 @@ import java.util.Stack;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 public class infixInput {
@@ -17,12 +18,23 @@ public class infixInput {
 			line = scnr.nextLine();
 			
 			System.out.println(line);
-			System.out.println(infixToPostFix(line));
-			System.out.println(comparator(infixToPostFix(line)));
+			//System.out.println(infixToPostFix(line));
+			int var = comparator(infixToPostFix(line));
+			if(var != -999999999){
+				System.out.println(var);
+			}
+			else{
+				System.out.println("Cant divide by zero, skiping output.");
+			}
 			System.out.println(" ");
 		}
 	}
 
+	/***
+	* This method checks to see if a character is an operator and if it is it returns the precedence of that operator
+	*@param char This is the expected character to check
+	*@return returns an integer of the precendence
+	*/
 	public static int checkIfOperator(char c){
 		if(c == '+' || c == '-'){
 			return 1;
@@ -43,6 +55,7 @@ public class infixInput {
 		StringBuilder sb = new StringBuilder();
 
 		// loop the entire string
+		// n2
 		for(int i = 0; i < input.length(); i++){
 			char c = input.charAt(i);
 			//skip if it is a space
@@ -113,6 +126,7 @@ public class infixInput {
 
 		return sb.toString();
 	}
+
 	public static int comparator(String line) {
 		if (isBoolExpression) {
 			/*
@@ -120,8 +134,7 @@ public class infixInput {
 			Following this evaluation is the comparison that correlates to the operator.
 			*/
 
-			int returnNum = 0;
-			int result = 0;
+			int returnNum = -1;
 			int givNum = 3; 
 			int givNum2 = 3;
 			String givCom = "<=";
@@ -132,22 +145,29 @@ public class infixInput {
 			StringBuilder str = new StringBuilder();
 			boolean beenAdded = false;
 
+			// splits the input string into a multiple of sb's and strings
 			for (int i = 0; i < line.length(); i ++) {
+				//checks to see if this char is a operator
 				if(line.charAt(i) == '>' || line.charAt(i) == '<'|| line.charAt(i) == '|'|| line.charAt(i) == '&'|| line.charAt(i) == '=' || line.charAt(i) == '!'){
 					booloperator.append(line.charAt(i));
+					//checks if next char is operator and if so adds the new string
 					if(line.charAt(i+1) == '=' || line.charAt(i+1) == '|'|| line.charAt(i+1) == '&'){
 						booloperator.append(line.charAt(i+1));
 						i++;
 					}
+					//adds operator to queue
 					queue.add(booloperator.toString());
 					booloperator = new StringBuilder();
+					//adds the new sb into arr 
 					if(!beenAdded && str.length()!=0){
 						arr.add(str);
 					}
+					//clears sb
 					str = new StringBuilder();
 					beenAdded = false;
 				}
 				else{
+					//adds char to sb
 					str.append(line.charAt(i));
 					if(!beenAdded){
 						arr.add(str);
@@ -156,67 +176,158 @@ public class infixInput {
 				}
 			}
 
-			for (int i = 0; i < arr.size(); i++) {
-				//System.out.println(arr.get(i).toString());
-				System.out.println("Array value: " + arr.get(i).toString()+" Test case: "+evluatePostFix(arr.get(i)));
+			List<Integer> andOrNums = new ArrayList<>(); 
+			Queue<String> qandOr = new LinkedList<String>();
+			ArrayList<StringBuilder> arrClone = new ArrayList<StringBuilder>();
 
-				givCom = queue.poll(); //if givCom -- && then givNum = returnNum
-				givNum = evluatePostFix(arr.get(i));
-				if (i < arr.size() - 1) {
-					i++;
-					givNum2 = evluatePostFix(arr.get(i));
+			for(int i = 0; i<arr.size();i++){
+				arrClone.add(arr.get(i));
+			}
+
+			for (int i = 0; i < arr.size(); i++) { //Iterates through the entire "line" which is stored in arr
+				if (queue.size() == 0) { //Checks to see if the queue is empty to make sure no null's are being compared
+					break; //If it is then it will exit the loop
 				}
 
+				givCom = queue.poll(); //Sets a variable, givCom equal to the top of the queue which is full of operators	
+
+				boolean isAndOr = false; // Automatically creates and sets a boolean to will store if the most recent operator is an and or or statement
+
+				if (givCom.equals("&&") || givCom.equals("||")) { //Checks to see if the variable, givCom is an and or an or statement
+					isAndOr = true; // If it is then it will change the boolean to true
+					qandOr.add(givCom); // Adds it to a new queue that stores and/or statements
+					if (queue.size() > 0) { // fixes a case for 1&&1 or 0&&1
+						givCom = queue.poll();
+						if(givCom.equals("&&") || givCom.equals("||")){
+							qandOr.add(givCom);
+						}
+					}
+				}
+
+				if (qandOr.size() == 1 && returnNum != -1) {
+					andOrNums.add(returnNum); // Adds the resulting number from the needed evaluations to a list of integers to be evaluated
+				}
+
+				givNum = evluatePostFix(arr.get(i)); // Solves the infix version and sets it equal to givNum
+				arrClone.remove(0);
+				if (i < arr.size() - 1) {
+					i++;
+					givNum2 = evluatePostFix(arr.get(i)); // Solves the infix version and sets it equal to givNum2
+					arrClone.remove(0);
+				}
+				//fixes odd case where the number is by itself past a && or a || operator 
+
+				// Evlautes a greater than statement
+				else{
+					if(givNum > 0){
+						returnNum = 1; 
+					}
+					else{
+						returnNum = 0;
+					}
+				}
+
+				if(givNum == -999999999 || givNum2 == -999999999){
+					return -999999999;
+				}
+
+				// Evlautes a greater than statement
 				if (givCom.equals(">")) {
 					if (givNum > givNum2) {returnNum = 1;}
 					else {returnNum = 0;}
 				}
+				// Evlautes a greater or equal to statement
 				else if (givCom.equals(">=")) {
 					if (givNum >= givNum2) {returnNum = 1;}
 					else {returnNum = 0;}
 				}
+				// Evlautes a less than statement
 				else if (givCom.equals("<")) {
 					if (givNum < givNum2) {returnNum = 1;}
 					else{returnNum = 0;}
 				}
+				// Evlautes a less than or equal to statement
 				else if (givCom.equals("<=")) {
 					if (givNum <= givNum2){returnNum = 1;}
 					else{returnNum = 0;}
 				}
+				// Evlautes an equal to statement
 				else if (givCom.equals("==")) {
 					if (givNum == givNum2) {returnNum = 1;}
 					else {returnNum = 0;}
 				}
+				// Evlautes an not equal to statement
 				else if (givCom.equals("!=")) {
 					if (givNum != givNum2) {returnNum = 1;}
 					else {returnNum = 0;}
 				}
-				else if (givCom.equals("&&")) {
-					givNum = returnNum;
-					givNum2 = givNum = evluatePostFix(arr.get(i));
-					if (givNum + givNum2 < 1) {
-						return 0;
+
+				// Checks to see if the boolean true, which means the comparator was an and/or
+				if (isAndOr) {
+					if (returnNum != -1) { // If the retunNum has not changed
+						andOrNums.add(returnNum); // Add it, the evaluated returnNum, to the ArrayList of integers
 					}
-					else{return 1;}
+					else {
+						andOrNums.add(givNum); // Add the number at the index to the ArrayList of integers
+						andOrNums.add(givNum2); // Add the number at the index to the ArrayList of integers
+					}
 				}
-				else if (givCom.equals("||")) {}
+			}
+
+			if(qandOr.size() > 0) {
+				for(StringBuilder var : arrClone){
+					andOrNums.add(evluatePostFix(var));
 				}
-
-
-			//System.out.println(givNum + givCom + givNum2);
+				returnNum = solveAndOr(andOrNums, qandOr);
+			}
 			isBoolExpression = false;
 			return returnNum;
 		}
 		else {
 			StringBuilder str = new StringBuilder();
 			for (int i = 0; i < line.length(); i ++) {
-					str.append(line.charAt(i));
+					str.append(line.charAt(i)); // Appends the str to concatenate with the line
 				}
-			System.out.println("Test case: "+str);
-			return evluatePostFix(str);
+			return evluatePostFix(str); // Evaluates the string and calcualtes the result
 		}
 		
 	}
+
+	static int solveAndOr(List<Integer> nums, Queue<String> ops) {
+		//Solves the and/or expressions in a line
+
+		// Creates and initializes variables
+		int curNum = -1;
+		int retNum = -1;
+		String curOp = "";
+		for (int i = 0; i <nums.size(); i++) { // For loop to loop through all the numbers that were given
+			if (i ==0) {
+				curNum = nums.get(i); // Sets the variable to a number at the given index
+				curOp = ops.poll(); // Sets the variable to the most recent comparator
+				i++; // iterates i 
+				retNum = nums.get(i); // gets the next number
+				// Because of formatting and evaluation 1&&0, this is proper way to receive values
+			}
+			else {
+				curNum = nums.get(i); // Sets the variable to a number at the given index
+				curOp = ops.poll(); // Sets the variable to the most recent comparator
+			}
+
+			if(curOp != null){
+				// Evaluates the expressions depending on the comparator and changes retNum to the evaluated value
+				if (curOp.equals("&&")) {
+					if (curNum  == 1 && retNum == 1) {retNum = 1;}
+					else{retNum = 0;}
+				}
+				else if (curOp.equals("||")) {
+					if (curNum == 1 || retNum == 1) {retNum = 1;}
+					else{retNum = 0;}
+				}
+			}
+		}
+		return retNum; // Returns retNum which is the evaluated value
+	}
+
 	static int evluatePostFix(StringBuilder sb) {
 
 		// create a stack
@@ -247,7 +358,12 @@ public class infixInput {
 					break;
 
 				case '/':
-					newStck.push(val2 / val1);
+					try {
+						newStck.push(val2 / val1);
+					  }
+					  catch(Exception e) {
+						return -999999999;
+					  }
 					break;
 
 				case '*':
@@ -263,29 +379,26 @@ public class infixInput {
 					break;
 
 				case '>':
-					return (Integer) null;
+					return -999999999;
 
 				case '!':
-					return (Integer) null;
+					return -999999999;
 
 				case '=':
-					return (Integer) null;
+					return -999999999;
 
 				case '&':
-					return (Integer) null;
+					return -999999999;
 
 				case '|':
-					return (Integer) null;
+					return -999999999;
 
 				case '<':
-					return (Integer) null;
+					return -999999999;
 				}
 			}
 		}
 		int eval = newStck.pop();
-		//System.out.println(eval); // may need to change this to a string, ask
-									// them. change to static String and do
-									// string eval=Integer.toString()
 		return eval;
 	}
 
